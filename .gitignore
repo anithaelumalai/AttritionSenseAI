@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Database files
+database/*.db-journal
+
+# Streamlit config
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+database/*.db
+data/feedback.csv
+data/prediction_history.csv
+.streamlit/security.yaml

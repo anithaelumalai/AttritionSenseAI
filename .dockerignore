@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+.streamlit/secrets.toml
+database/*.db-journal
+.git/
+.gitignore
+.vscode/
+.idea/
+powershell.cmd
