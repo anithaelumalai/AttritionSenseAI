@@ -131,14 +131,14 @@ Submission Details:
 - Privacy Status: {"Confidential / Anonymous" if is_anon else "Identified"}
 
 Feedback Summary (1-5 Rating Scale):
-- Job Satisfaction: {feedback_data.get('job_satisfaction', 'N/A')}/5
-- Work-Life Balance: {feedback_data.get('work_life_balance', 'N/A')}/5
-- Manager Support: {feedback_data.get('manager_support', 'N/A')}/5
-- Workload Manageability: {feedback_data.get('workload', 'N/A')}/5
-- Career Growth Opportunities: {feedback_data.get('career_growth', 'N/A')}/5
-- Recognition & Appreciation: {feedback_data.get('recognition', 'N/A')}/5
-- Compensation & Benefits Satisfaction: {feedback_data.get('compensation_satisfaction', 'N/A')}/5
-- Intention to Stay: {feedback_data.get('intention_to_stay', 'N/A')}/5
+- Job Satisfaction: {feedback_data.get('job_satisfaction', 3)}/5
+- Work-Life Balance: {feedback_data.get('work_life_balance', 3)}/5
+- Manager Support: {feedback_data.get('manager_support', 3)}/5
+- Workload Manageability: {feedback_data.get('workload', 3)}/5
+- Career Growth Opportunities: {feedback_data.get('career_growth', 3)}/5
+- Recognition & Appreciation: {feedback_data.get('recognition', 3)}/5
+- Compensation Satisfaction: {feedback_data.get('compensation_satisfaction', 3)}/5
+- Intention to Stay: {feedback_data.get('intention_to_stay', 3)}/5
 
 Employee Comments:
 "{comments}"
@@ -152,7 +152,7 @@ Please log in to the HR Portal to view aggregated workplace sentiment analytics.
         msg = MIMEMultipart()
         msg["From"] = cfg["user"]
         msg["To"] = cfg["hr_email"]
-        msg["Subject"] = "New Employee Feedback Received"
+        msg["Subject"] = "New Employee Feedback Submitted - AttritionSense AI"
         msg.attach(MIMEText(body, "plain"))
         
         with smtplib.SMTP(cfg["host"], cfg["port"], timeout=10) as server:

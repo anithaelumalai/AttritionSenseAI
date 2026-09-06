@@ -16,6 +16,40 @@ def get_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     return conn
 
+def migrate_feedback_table_if_needed(conn: sqlite3.Connection):
+    """
+    Safely inspects the feedback table and adds any missing columns using ALTER TABLE.
+    Never drops tables or deletes existing data.
+    """
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(feedback)")
+    existing_cols = {row[1]: row for row in cur.fetchall()}
+    
+    # Required columns and their fallback definitions for ALTER TABLE
+    column_definitions = {
+        "employee_id": "ALTER TABLE feedback ADD COLUMN employee_id TEXT",
+        "is_anonymous": "ALTER TABLE feedback ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0",
+        "job_satisfaction": "ALTER TABLE feedback ADD COLUMN job_satisfaction INTEGER NOT NULL DEFAULT 3",
+        "work_life_balance": "ALTER TABLE feedback ADD COLUMN work_life_balance INTEGER NOT NULL DEFAULT 3",
+        "manager_support": "ALTER TABLE feedback ADD COLUMN manager_support INTEGER NOT NULL DEFAULT 3",
+        "workload": "ALTER TABLE feedback ADD COLUMN workload INTEGER NOT NULL DEFAULT 3",
+        "career_growth": "ALTER TABLE feedback ADD COLUMN career_growth INTEGER NOT NULL DEFAULT 3",
+        "recognition": "ALTER TABLE feedback ADD COLUMN recognition INTEGER NOT NULL DEFAULT 3",
+        "compensation_satisfaction": "ALTER TABLE feedback ADD COLUMN compensation_satisfaction INTEGER NOT NULL DEFAULT 3",
+        "intention_to_stay": "ALTER TABLE feedback ADD COLUMN intention_to_stay INTEGER NOT NULL DEFAULT 3",
+        "comments": "ALTER TABLE feedback ADD COLUMN comments TEXT",
+        "email_status": "ALTER TABLE feedback ADD COLUMN email_status TEXT DEFAULT 'Pending'",
+        "created_at": "ALTER TABLE feedback ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    }
+    
+    for col_name, alter_stmt in column_definitions.items():
+        if col_name not in existing_cols:
+            try:
+                cur.execute(alter_stmt)
+            except sqlite3.OperationalError:
+                pass
+    conn.commit()
+
 def init_database(db_path: str = DB_PATH):
     """Initializes all SQLite database tables."""
     conn = get_connection(db_path)
@@ -57,17 +91,15 @@ def init_database(db_path: str = DB_PATH):
         career_growth INTEGER NOT NULL CHECK(career_growth BETWEEN 1 AND 5),
         recognition INTEGER NOT NULL CHECK(recognition BETWEEN 1 AND 5),
         compensation_satisfaction INTEGER NOT NULL CHECK(compensation_satisfaction BETWEEN 1 AND 5),
+        intention_to_stay INTEGER NOT NULL DEFAULT 3 CHECK(intention_to_stay BETWEEN 1 AND 5),
         comments TEXT,
         email_status TEXT DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
 
-    # Migration check for existing databases
-    cur.execute("PRAGMA table_info(feedback)")
-    cols = [c[1] for c in cur.fetchall()]
-    if "email_status" not in cols:
-        cur.execute("ALTER TABLE feedback ADD COLUMN email_status TEXT DEFAULT 'Pending'")
+    # Non-destructive schema migration check for existing databases
+    migrate_feedback_table_if_needed(conn)
 
     
     # 4. Prediction history table (HR)

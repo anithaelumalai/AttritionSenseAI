@@ -17,19 +17,20 @@ BUDDYBOT_SYSTEM_PROMPT = """You are BuddyBot, an empathetic, conversational, and
 Your purpose is to chat with employees as an attentive, supportive, and grounded peer.
 
 STRICT CONVERSATIONAL RULES:
-1. NEVER use canned therapist clichés such as:
-   - "I understand"
-   - "That sounds difficult" / "That sounds tough"
-   - "Thank you for sharing" / "Thanks for being open"
-   - "I hear you"
-   - "That must be hard"
-2. Directly answer any questions the employee asks with pragmatic, real-world suggestions.
-3. If the employee shares an experience or feeling, acknowledge their specific words and context directly.
-4. Ask thoughtful, curious follow-up questions instead of always giving unsolicited advice or lecture-style lists.
-5. If the employee shifts to a new topic, follow the new topic immediately.
-6. Vary your sentence structure, tone, and length naturally (keep responses to 2–4 conversational sentences).
-7. Never diagnose medical or psychological conditions.
-8. BuddyBot is 100% private to the employee. Never mention or send anything to HR.
+1. NEVER use canned clichés or therapist tropes such as:
+   - "I understand" / "I completely understand"
+   - "That sounds difficult" / "That sounds tough" / "That must be hard"
+   - "Thank you for sharing" / "Thanks for opening up"
+   - "I hear you" / "I appreciate you sharing"
+   - "What about your feeling?" / "Don't feel bad"
+2. When the user asks for a story (e.g., "tell me a story", "short story"), tell a thoughtful, engaging, short (2-3 paragraphs) narrative about perseverance, perspective, mindful calm, or teamwork.
+3. Directly answer any questions the employee asks with pragmatic, real-world workplace suggestions.
+4. If the employee shares a feeling or frustration, listen empathetically and acknowledge their specific situation without lecturing.
+5. If the user expresses self-harm or suicidal thoughts, immediately provide a compassionate message and the 988 Suicide & Crisis Lifeline resource.
+6. Never diagnose medical or psychological conditions.
+7. Ask natural, engaging follow-up questions when appropriate.
+8. If the employee shifts to a new topic, follow the new topic immediately.
+9. BuddyBot is 100% private to the employee. NEVER mention HR, NEVER send emails to HR, and NEVER share conversations with administrators.
 """
 
 def get_gemini_api_key() -> Optional[str]:
@@ -75,13 +76,62 @@ def clear_employee_chat_history(employee_id: str):
     conn.close()
 
 # ==============================================================================
-# CONTEXTUAL WORKPLACE DIALOGUE ENGINE (NO CANNED RESPONSES / NO CLICHÉS)
+# CONVERSATIONAL STORYTELLING REPOSITORY
+# ==============================================================================
+
+STORIES = [
+    (
+        "The Stonecutter's Vision",
+        "A traveler once walked past a busy quarry and saw three workers chiseling granite under the hot sun.\n\n"
+        "He asked the first worker what he was doing. The man wiped sweat from his brow and muttered, 'I am chipping away at this stubborn rock until my shift ends.'\n\n"
+        "He asked the second worker, who replied, 'I am carving square blocks so I can earn a fair wage to feed my family.'\n\n"
+        "Then he asked the third worker, whose eyes lit up as he smoothed the edge of his stone. 'I,' the worker smiled proudly, 'am helping build a great cathedral that will stand for hundreds of years.'\n\n"
+        "Whenever daily tasks feel repetitive or heavy, stepping back to see the larger structure you are shaping makes all the difference."
+    ),
+    (
+        "The Japanese Bamboo",
+        "There is a remarkable species of bamboo known as the moso bamboo. When a gardener plants the seed, nothing visible happens during the entire first year. He waters the patch and tends the soil faithfully, but not a single sprout emerges.\n\n"
+        "The second year passes—still nothing. The third and fourth years pass—not an inch above the ground. To an onlooker, it looks like futile work.\n\n"
+        "Then, during the fifth year, a green shoot breaks the earth. Within just six weeks, it rockets over eighty feet into the air.\n\n"
+        "Did it grow eighty feet in six weeks? Or did it grow eighty feet over five patient years of anchoring deep, invisible root networks beneath the soil? Real workplace skill and personal progress often happen invisibly right until the moment they surge."
+    ),
+    (
+        "The Empty Boat",
+        "An ancient philosopher told of a fisherman who took his small wooden skiff out onto a misty lake at dawn.\n\n"
+        "As he rowed quietly through the morning fog, another vessel suddenly came out of nowhere and bumped hard against his hull. The fisherman felt an instant spike of anger, standing up with his oar ready to confront the careless rower.\n\n"
+        "When he peered through the haze, he realized the other boat was completely empty. It had simply broken loose from its dock and drifted with the wind.\n\n"
+        "His frustration vanished immediately. He smiled, nudged the empty boat gently aside, and continued rowing peacefully. In daily work, most collisions aren't personal malice—they are just empty boats drifting on currents of rush, stress, and tight deadlines."
+    ),
+    (
+        "The Lighthouse Keeper's Oil",
+        "On a rocky shoreline, a lighthouse keeper guarded the beacon that guided night ships through dangerous shoals. Each month, he was allotted a fixed container of fuel oil to keep the flame lit.\n\n"
+        "One cold evening, a neighbor asked for a cup of oil to heat his hearth. The kind keeper poured some out. The next week, a stranded traveler asked for fuel for his lantern, and the keeper shared again.\n\n"
+        "Near the end of the month, a violent squall hit the coast. The keeper went to light the tower lamp, but the reservoir was dry. The light flickered out, and two cargo vessels struck the rocks in the dark.\n\n"
+        "The harbor master came the next morning and told the keeper: 'Your generosity was noble, but your primary charge was to keep the beacon shining. If you deplete yourself, the whole harbor goes dark.' Protecting your personal energy isn't selfish—it's what lets you guide others."
+    ),
+    (
+        "The Master Carpenter and the Knot",
+        "A young apprentice was crafting a solid oak conference table and grew upset when he found a dark, swirling knot right in the center of the wood. He grabbed a saw, planning to cut it out and toss the piece aside.\n\n"
+        "The master carpenter stopped his hand gently. 'Look closely,' the master said. 'That knot isn't a flaw. That is where the tree fought off a fierce storm thirty years ago and grew back denser to support itself.'\n\n"
+        "Together, they carefully planed the timber, polished the swirling whorls with beeswax, and made that knot the centerpiece of the table. When the customer received it, they remarked that the unique pattern of the knot was the most beautiful part of the entire room.\n\n"
+        "Workplace setbacks and difficult stretches often feel like unsightly obstacles in the moment, but given time and care, they become the defining stories of your resilience."
+    )
+]
+
+# ==============================================================================
+# CONVERSATIONAL WORKPLACE DIALOGUE ENGINE
 # ==============================================================================
 
 FORBIDDEN_PHRASES = [
     "i understand", "that sounds difficult", "thank you for sharing",
     "i hear you", "that must be hard", "thanks for opening up",
-    "that sounds tough", "i appreciate you sharing"
+    "that sounds tough", "i appreciate you sharing", "what about your feeling",
+    "don't feel bad", "as an ai", "as an artificial intelligence"
+]
+
+CRISIS_KEYWORDS = [
+    "kill myself", "suicide", "end my life", "want to die", "harm myself",
+    "better off dead", "end it all", "don't want to live", "take my own life"
 ]
 
 def clean_cliches(text: str) -> str:
@@ -92,15 +142,41 @@ def clean_cliches(text: str) -> str:
         cleaned = pattern.sub("", cleaned)
     return re.sub(r"\s+", " ", cleaned).strip()
 
+def get_crisis_response() -> str:
+    """Delivers an immediate, supportive crisis response with official helpline contacts."""
+    return (
+        "I hear how much pain you're carrying right now, and I want you to know you are not alone. "
+        "Your safety and wellbeing truly matter. Please connect with someone who can support you through this difficult moment:\n\n"
+        "• **Suicide & Crisis Lifeline**: Call or text **988** (Available 24/7, free and confidential in the US/Canada)\n"
+        "• **Crisis Text Line**: Text **HOME to 741741** to connect with a crisis counselor\n"
+        "• **International Helplines**: Visit [findahelpline.com](https://findahelpline.com) for confidential support in your country\n\n"
+        "Please consider stepping away from work right now and reaching out to a professional, counselor, or loved one who can be there with you."
+    )
+
 def detect_user_intent(msg: str) -> Dict[str, Any]:
     """Classifies user intent, topic domain, and speech act."""
     text = msg.lower().strip()
+    
+    # 0. Crisis detection
+    if any(k in text for k in CRISIS_KEYWORDS):
+        return {"intent": "crisis", "is_question": False, "text": text}
+
+    # 1. Story detection
+    story_phrases = [
+        "tell me a story", "tell a story", "short story", "share a story",
+        "story for me", "bedtime story", "read me a story", "give me a story"
+    ]
+    if any(p in text for p in story_phrases) or text in ["story", "a story", "can you tell me a story", "tell me a story please"]:
+        return {"intent": "story", "is_question": False, "text": text}
+
     is_question = text.endswith("?") or any(text.startswith(w) for w in [
         "how", "what", "why", "when", "where", "can you", "should i", "is it", "do you", "could i"
     ])
     
     intent = "general_reflection"
-    if any(w in text for w in ["won", "solved", "finished", "shipped", "deployed", "deploy", "approved", "celebrate", "great news", "huge win", "nailed it"]):
+    if any(w in text for w in ["angry", "frustrated", "annoyed", "unfair", "mad", "upset", "pissed", "vent"]):
+        intent = "venting"
+    elif any(w in text for w in ["won", "solved", "finished", "shipped", "deployed", "deploy", "approved", "celebrate", "great news", "huge win", "nailed it"]):
         intent = "celebration"
     elif any(w in text for w in ["meeting", "meetings", "calls", "zoom", "sync", "syncs", "huddle"]):
         intent = "meetings"
@@ -112,7 +188,7 @@ def detect_user_intent(msg: str) -> Dict[str, Any]:
         intent = "manager"
     elif any(w in text for w in ["career", "promotion", "raise", "salary", "hike", "growth", "skills", "learn", "mentor"]):
         intent = "career"
-    elif any(w in text for w in ["coffee", "break", "stretch", "walk", "food", "snack", "weekend", "vacation", "eating lunch", "take a break"]):
+    elif any(w in text for w in ["coffee", "break", "stretch", "walk", "food", "snack", "weekend", "vacation", "lunch", "take a break"]):
         intent = "breaks_wellness"
     elif any(w in text for w in ["colleague", "coworker", "peer", "team", "conflict", "friction", "argue", "credit"]):
         intent = "team_dynamics"
@@ -134,12 +210,23 @@ def synthesize_contextual_response(
 ) -> str:
     """
     Synthesizes a tailored, context-specific response without predefined static rotation.
-    Combines direct answers, situational observations, and engaging follow-up questions.
+    Combines direct answers, storytelling, situational observations, and engaging follow-up questions.
     """
     analysis = detect_user_intent(user_message)
     intent = analysis["intent"]
     is_question = analysis["is_question"]
     raw = analysis["text"]
+
+    # 1. CRISIS SAFETY
+    if intent == "crisis":
+        return get_crisis_response()
+
+    # 2. STORYTELLING
+    if intent == "story":
+        available_stories = [s for s in STORIES if s[0] not in str(recent_responses)]
+        story = available_stories[0] if available_stories else random.choice(STORIES)
+        title, text_content = story
+        return f"Here is a short story for you: **{title}**\n\n{text_content}\n\nI hope that offered a brief breather in your workday. How does that perspective sit with you?"
 
     # History context awareness (detect previous topic & user statement)
     prev_user_msgs = [turn["content"].lower() for turn in history if turn.get("role") == "user"]
@@ -148,71 +235,78 @@ def synthesize_contextual_response(
     # Check if user pivoted to a completely new topic
     topic_changed = (prev_user_topic is not None and prev_user_topic != intent and intent != "general_reflection")
 
-    # -------------------------------------------------------------
-    # 1. DIRECT QUESTION HANDLING
-    # -------------------------------------------------------------
+    # 3. DIRECT QUESTIONS
     if is_question:
         if intent == "meetings":
             answers = [
-                "To push back on meeting overload without stepping on toes, you can say: 'I have a high-priority deliverable today, so I'll review the summary doc asynchronously. Ping me if a key decision needs my input.' Would that script work for your current team dynamics?",
-                "One solid approach is asking the organizer: 'What specific outcome are we aiming to finalize in this session?' Often that prompts them to realize it can be handled over a quick chat thread instead. Are most of these syncs recurring status meetings or impromptu requests?",
-                "Try proposing 20-minute and 45-minute calendar defaults across your department. That automatically creates 10-minute breathers between calls. Does your team currently protect no-meeting mornings or focus blocks?"
+                "To push back on meeting overload without friction, try this script: 'I have a high-priority deliverable today, so I'll review the summary doc asynchronously. Ping me if a key decision needs my input.' Would that fit your team culture?",
+                "Ask the organizer ahead of time: 'What specific decision or deliverable are we aiming to finalize in this session?' Often that prompts people to realize it can be handled over a quick chat thread instead. Are most of these syncs recurring status check-ins?",
+                "Propose 25-minute and 50-minute defaults for your team calendar. That builds in natural 5-to-10 minute buffers between discussions. Does your team currently observe focus hours or quiet mornings?"
             ]
         elif intent == "manager":
             answers = [
-                "When bringing up a sensitive topic with a manager, anchor it around outcomes rather than complaints: 'To make sure I deliver quality on project X, I'd like to adjust priority Y.' What specific outcome are you hoping to get out of the discussion?",
-                "A clean 1-on-1 prep format is the '3Ps': Progress, Priorities, and Problems. Sending 3 bullet points 2 hours ahead of time completely changes the conversation from a status grill to strategic support. Have you tried an advance agenda before?",
-                "The best time to ask is during a regular 1-on-1 check-in, framing it as: 'I want to align with where you see the biggest impact for our team this quarter.' How open is your manager to collaborative priority-setting?"
+                "Anchor the conversation around outcomes rather than complaints: 'To make sure I deliver top quality on Project A, I'd like to adjust the timeline on Task B.' What specific outcome are you hoping to get out of the discussion?",
+                "A clean 1-on-1 prep format is the '3Ps': Progress, Priorities, and Problems. Sending 3 bullet points 2 hours ahead of time changes the tone from an interrogation to strategic collaboration. Have you tried an advance agenda before?",
+                "Frame your request around organizational impact: 'I want to align where you see the biggest value-add for our team this quarter.' How open is your manager to collaborative priority-setting?"
             ]
         elif intent == "career":
             answers = [
-                "Directly ask your manager: 'What concrete milestones would demonstrate readiness for the next tier over the next 6 months?' That turns vague expectations into measurable deliverables. Have you identified a specific next role or skill track yet?",
-                "Focus on expanding your cross-functional visibility—leading a retrospective, mentoring a newer teammate, or presenting at team demo. Which of those feels closest to your natural strengths?",
-                "Start keeping an ongoing 'brag sheet' document where you log key metrics, launched deliverables, and colleague shout-outs every Friday. When review season arrives, your entire case is already written. Do you currently track your wins anywhere?"
+                "Directly ask your manager: 'What concrete milestones would demonstrate readiness for the next level over the next 6 months?' That turns subjective opinions into measurable benchmarks. Have you identified a specific next role or skill target?",
+                "Focus on expanding cross-team visibility—leading a retrospective, mentoring a newer teammate, or presenting at a sprint showcase. Which of those aligns best with your natural strengths?",
+                "Start keeping a Friday 'brag sheet' document where you jot down key metrics, shipped deliverables, and colleague shout-outs. When review season arrives, your entire case is already prepared. Do you currently track your wins anywhere?"
             ]
         elif intent == "workload":
             answers = [
-                "When everything feels urgent, force a priority trade-off: 'I can deliver A by tomorrow if we push B to next Tuesday—does that alignment work?' Forcing the stakeholder to choose relieves the pressure from your shoulders. Which task is demanding the most attention right now?",
-                "Try timeboxing: allocate strict 40-minute blocks to tackle a single thorny task with notifications silenced. Seeing one real item crossed off breaks the spiral of overwhelm. Can you carve out one undisturbed hour today?",
-                "Rank your current tasks into 'Must Finish Today' vs. 'Nice to Have'. Anything that doesn't cause a fire if delayed 24 hours gets deferred. What's sitting on your to-do list that could realistically wait until tomorrow?"
+                "When everything feels urgent, force a priority trade-off: 'I can deliver Deliverable A by tomorrow if we push Task B to next week—does that alignment work for you?' Forcing the stakeholder to choose takes the pressure off your shoulders. Which task is demanding the most energy right now?",
+                "Try timeboxing: allocate a strict 40-minute block to tackle one thorny task with all notifications muted. Getting one tangible item crossed off breaks the spiral of overwhelm. Can you carve out one undisturbed block today?",
+                "Rank current tasks into 'Must Finish Today' versus 'Nice to Have'. Anything that doesn't cause a breakdown if delayed 24 hours gets deferred. What's sitting on your list that could realistically wait until tomorrow?"
             ]
         elif intent == "breaks_wellness":
             answers = [
-                "Step completely away from every monitor and phone for 7 full minutes. A glass of cold water, a quick lap around the hallway or outside, and loosening your shoulders resets your focus. Which of those can you do right now?",
-                "A brisk walk outside or listening to an upbeat track without looking at Slack clears mental brain fog faster than coffee. What kind of break usually re-energizes you best?",
-                "Step away from your desk to eat lunch! Eating while answering emails gives your brain zero downtime to digest and decompress. Can you step away for 20 undisturbed minutes?"
+                "Step away from every monitor and phone for 7 full minutes. A tall glass of water, a quick lap around the floor or outside, and rolling your shoulders resets your mental focus. Which of those can you do right now?",
+                "A brisk walk outside or listening to an upbeat track without checking Slack clears mental fog faster than a second cup of coffee. What kind of break usually re-energizes you best?",
+                "Step completely away from your desk for lunch! Eating while answering emails gives your nervous system zero downtime to decompress. Can you take 20 undisturbed minutes?"
+            ]
+        elif intent == "venting":
+            answers = [
+                "It makes total sense why that feels frustrating. Would it help more to talk through practical ways to handle it, or would you rather just have space to vent it all out first?",
+                "Carrying that kind of tension while trying to do your job is draining. What felt like the most unreasonable part of what happened?",
+                "Situations like that test anyone's patience. Do you have someone on the team who has your back on this, or does it feel like you're handling it solo?"
             ]
         else:
             answers = [
-                f"Looking at what you asked, the most practical first step is clarifying the single most important priority on your plate today. What is the main outcome you want to see by the time you sign off?",
-                f"That depends on whether you have direct autonomy over the timeline or need buy-in from others first. Which side of that equation are you dealing with?",
-                f"Often the simplest fix is communicating early: giving stakeholders a heads-up before an issue becomes a crisis. Who would be the most important person to loop in on this?"
+                "Looking at what you asked, the most practical first step is clarifying the single most important priority on your plate today. What is the main outcome you want to see by the time you sign off?",
+                "That depends on whether you have direct autonomy over the timeline or need buy-in from others first. Which side of that equation are you dealing with?",
+                "Often the simplest fix is early communication: giving stakeholders a heads-up before an issue becomes a fire drill. Who would be the most important person to loop in on this?"
             ]
-        # Filter out anything recently used
-        candidates = [a for a in answers if a not in recent_responses]
+        candidates = [a for a in answers if clean_cliches(a) not in recent_responses]
         return candidates[0] if candidates else answers[0]
 
-    # -------------------------------------------------------------
-    # 2. TOPIC PIVOT (USER CHANGED SUBJECT)
-    # -------------------------------------------------------------
+    # 4. TOPIC PIVOT (USER SWITCHED TOPICS)
     if topic_changed and intent not in ["celebration", "closing", "general_reflection"]:
         if intent == "breaks_wellness":
-            return "Pivoting over to breaks and relaxation—that is genuinely a great move. Are you thinking of stepping outside for a bit, or grabbing a bite?"
+            return "Pivoting over to breaks and relaxation—that is a great move. Are you thinking of stepping outside for some fresh air, or grabbing a bite?"
         elif intent == "meetings":
             return "Shifting over to meetings—let's look at your calendar. How many hours of calls are you staring down today?"
         elif intent == "career":
-            return "Changing gears to career and future goals—that's a great topic to explore. What's on your mind regarding your role or next steps?"
+            return "Changing gears to career and future goals—that's a valuable topic to explore. What's on your mind regarding your role or next steps?"
         elif intent == "workload":
             return "Switching over to workload and tasks. What's the biggest project competing for your focus right now?"
+        elif intent == "venting":
+            return "Let it out. Navigating workplace friction takes a real toll. What happened?"
 
-    # -------------------------------------------------------------
-    # 3. TOPIC-SPECIFIC ACTIVE CONVERSATION
-    # -------------------------------------------------------------
-    if intent == "meetings":
+    # 5. TOPIC-SPECIFIC ACTIVE CONVERSATION
+    if intent == "venting":
+        variants = [
+            "Carrying frustration around all day while trying to stay productive is exhausting. What was the exact moment things boiled over today?",
+            "You have every reason to want clarity and fairness in your work. Did this come out of nowhere, or has it been simmering for weeks?",
+            "Take your time and lay it out. Getting thoughts out of your head and into words often brings clarity on what's worth fighting for and what to let go."
+        ]
+    elif intent == "meetings":
         if "mostly" in raw or "too many" in raw or "all day" in raw:
             variants = [
-                "Back-to-back calls leave virtually zero buffer for deep thinking or even catching your breath. If you look at tomorrow's schedule, is there at least one meeting you could decline or ask for notes on instead?",
-                "Screen fatigue is draining because you're constantly performing attention. Could you dial in audio-only for your next discussion and pace around the room?",
+                "Back-to-back calls leave virtually zero buffer for deep thinking or catching your breath. Looking at tomorrow's schedule, is there at least one meeting you could decline or ask for notes on instead?",
+                "Screen fatigue is draining because you're constantly performing attention. Could you dial in audio-only for your next discussion and stretch your legs?",
                 "Days dominated by calls usually end with a backlog of unanswered messages. Are these collaborative work sessions, or mostly people presenting slide decks to each other?"
             ]
         else:
@@ -225,17 +319,17 @@ def synthesize_contextual_response(
         variants = [
             "Demanding stretches happen, but running on empty catches up fast. What part of today was the heaviest draw on your battery?",
             "Rest isn't a reward you earn after finishing everything—it's what keeps you functioning. What's the earliest reasonable time you can power down your workstation today?",
-            "Notice where you're holding tension right now—often it's the jaw or shoulders. Do you have anything pressing left on your agenda, or can you coast into a low-gear afternoon?"
+            "Notice where you're holding tension right now—often it's the jaw or shoulders. Do you have anything pressing left on your agenda, or can you coast into a lower gear?"
         ]
     elif intent == "workload":
         variants = [
             "When the queue keeps growing, prioritizing gets frustrating because everything feels labeled critical. What's the single item that would give you the biggest sense of relief to finish?",
-            "Context switching across ten different tasks is twice as exhausting as focusing on one big problem. Could you bundle similar tasks together into a single block?",
+            "Context switching across ten different tasks is twice as exhausting as focusing on one big problem. Could you bundle similar tasks together into a single focus block?",
             "Keep in mind that high workloads usually reflect planning gaps higher up, not a personal failure to work fast enough. Have you mentioned your current capacity to your team lead?"
         ]
     elif intent == "manager":
         variants = [
-            "Manager relationships set the weather for the entire work week. What style of communication does your manager respond best to—quick async bullets, or live discussions?",
+            "Manager relationships set the tone for the entire work week. What style of communication does your manager respond best to—quick async bullets, or live discussions?",
             "Having a regular cadence where you can speak frankly makes a night-and-day difference. When is your next scheduled 1-on-1?",
             "Clear expectations prevent 90% of workplace friction. Do you feel completely aligned on what success looks like for your current deliverables?"
         ]
@@ -276,7 +370,6 @@ def synthesize_contextual_response(
             "Anytime! Wishing you an easy finish to your workday."
         ]
     else:
-        # Dynamic reflection based on content words
         words = [w for w in user_message.split() if len(w) > 4]
         topic_keyword = words[0].lower() if words else "work"
         variants = [
@@ -285,7 +378,6 @@ def synthesize_contextual_response(
             f"Reflecting on that is worthwhile. Do you want to brainstorm practical ways to navigate this, or did you just need to talk it through?"
         ]
 
-    # Filter against recently sent messages to prevent any repetition
     fresh_candidates = [v for v in variants if clean_cliches(v) not in recent_responses]
     selected = fresh_candidates[0] if fresh_candidates else random.choice(variants)
     return clean_cliches(selected)
@@ -299,7 +391,7 @@ def get_buddybot_response(user_message: str, employee_id: str, history: List[Dic
     Primary BuddyBot response coordinator.
     Attempts Gemini LLM API if key is available with secure context handling.
     Otherwise runs the advanced contextual dialogue engine (clearly framed as contextual companion).
-    Guarantees no repetitive canned clichés.
+    Guarantees no repetitive canned clichés, no HR notification, and 100% private to the employee.
     """
     api_key = get_gemini_api_key()
     
@@ -310,13 +402,16 @@ def get_buddybot_response(user_message: str, employee_id: str, history: List[Dic
         if turn.get("role") in ["assistant", "model", "buddybot"]
     ]
     
+    # Safety Check: If user explicitly mentions crisis keywords, provide immediate lifeline
+    if any(k in user_message.lower() for k in CRISIS_KEYWORDS):
+        return get_crisis_response()
+
     # 1. ATTEMPT GEMINI GENERATIVE ENGINE
     if api_key:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
             
-            # Use available current model
             model = genai.GenerativeModel(
                 model_name="gemini-1.5-flash",
                 system_instruction=BUDDYBOT_SYSTEM_PROMPT
@@ -336,7 +431,6 @@ def get_buddybot_response(user_message: str, employee_id: str, history: List[Dic
             
             if response.text and response.text.strip():
                 reply = clean_cliches(response.text.strip())
-                # Ensure no exact repetition of recent replies
                 if reply not in recent_assistant_msgs:
                     return reply
         except Exception as e:

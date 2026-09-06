@@ -16,29 +16,33 @@ from datetime import datetime
 
 def save_employee_feedback(data: Dict[str, Any]) -> Tuple[bool, str]:
     """
-    Saves feedback to SQLite, syncs data/feedback.csv, and triggers HR notification email.
-    Records email_status ('Sent', 'Not Configured', or 'Failed') for dashboard audit.
+    Saves feedback to SQLite FIRST, syncs data/feedback.csv, and ONLY then dispatches HR notification email.
+    If database insertion fails, NO email is dispatched.
+    If email fails or is unconfigured, the feedback remains safely committed to SQLite.
+    Updates the record's email_status ('Sent', 'Not Configured', or 'Failed') accordingly.
     """
     is_anon = 1 if data.get("is_anonymous", False) else 0
     emp_id = None if is_anon else str(data.get("employee_id", ""))
     timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Prepare payload with timestamp for email
-    email_payload = {
-        **data,
-        "created_at": timestamp_str
-    }
-    email_ok, email_msg = send_feedback_notification_email(email_payload)
-    
-    if email_ok:
-        email_status = "Sent"
-    elif "not configured" in email_msg.lower():
-        email_status = "Not Configured"
-    else:
-        email_status = "Failed"
 
+    # Step 1: Input Validation
+    try:
+        job_sat = max(1, min(5, int(data.get("job_satisfaction", 3))))
+        wlb = max(1, min(5, int(data.get("work_life_balance", 3))))
+        mgr_supp = max(1, min(5, int(data.get("manager_support", 3))))
+        workload = max(1, min(5, int(data.get("workload", 3))))
+        career_growth = max(1, min(5, int(data.get("career_growth", 3))))
+        recognition = max(1, min(5, int(data.get("recognition", 3))))
+        comp_sat = max(1, min(5, int(data.get("compensation_satisfaction", 3))))
+        intent_stay = max(1, min(5, int(data.get("intention_to_stay", 3))))
+        comments = str(data.get("comments", "")).strip()
+    except (ValueError, TypeError) as e:
+        return False, f"Invalid feedback input values: {str(e)}"
+
+    # Step 2: Save to SQLite database FIRST
     conn = get_connection()
     cur = conn.cursor()
+    feedback_id = None
     
     try:
         cur.execute("""
@@ -48,31 +52,66 @@ def save_employee_feedback(data: Dict[str, Any]) -> Tuple[bool, str]:
                 workload, career_growth, recognition,
                 compensation_satisfaction, intention_to_stay,
                 comments, email_status, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?)
         """, (
             emp_id, is_anon,
-            int(data.get("job_satisfaction", 3)),
-            int(data.get("work_life_balance", 3)),
-            int(data.get("manager_support", 3)),
-            int(data.get("workload", 3)),
-            int(data.get("career_growth", 3)),
-            int(data.get("recognition", 3)),
-            int(data.get("compensation_satisfaction", 3)),
-            int(data.get("intention_to_stay", 3)),
-            str(data.get("comments", "")).strip(),
-            email_status,
-            timestamp_str
+            job_sat, wlb, mgr_supp,
+            workload, career_growth, recognition,
+            comp_sat, intent_stay,
+            comments, timestamp_str
         ))
         conn.commit()
-    except Exception as e:
+        feedback_id = cur.lastrowid
+    except Exception as db_err:
         conn.close()
-        return False, f"Failed to save feedback to database: {str(e)}"
+        # NEVER send email if database save fails
+        return False, f"Failed to save feedback to database: {str(db_err)}"
+
+    # Step 3: Verify save succeeded
+    if not feedback_id:
+        conn.close()
+        return False, "Failed to verify saved feedback in database."
+
+    # Sync CSV with pending state
+    sync_feedback_csv()
+
+    # Step 4: Dispatch HR notification email
+    email_payload = {
+        "employee_id": data.get("employee_id", ""),
+        "is_anonymous": is_anon == 1,
+        "job_satisfaction": job_sat,
+        "work_life_balance": wlb,
+        "manager_support": mgr_supp,
+        "workload": workload,
+        "career_growth": career_growth,
+        "recognition": recognition,
+        "compensation_satisfaction": comp_sat,
+        "intention_to_stay": intent_stay,
+        "comments": comments,
+        "created_at": timestamp_str
+    }
+
+    email_ok, email_msg = send_feedback_notification_email(email_payload)
+    
+    if email_ok:
+        final_email_status = "Sent"
+    elif "not configured" in email_msg.lower():
+        final_email_status = "Not Configured"
+    else:
+        final_email_status = "Failed"
+
+    # Step 5: Update record's email_status in database
+    try:
+        cur.execute("UPDATE feedback SET email_status = ? WHERE id = ?", (final_email_status, feedback_id))
+        conn.commit()
+    except Exception:
+        pass
     finally:
         conn.close()
-        
-    # Sync to CSV
+
+    # Sync CSV with final email status
     sync_feedback_csv()
-    
+
     return True, email_msg
 
 def sync_feedback_csv():
@@ -84,9 +123,9 @@ def sync_feedback_csv():
     df.to_csv(CSV_FEEDBACK_PATH, index=False)
 
 def get_feedback_records(limit: int = 200) -> pd.DataFrame:
-    """Retrieves all feedback records for authorized HR analytics."""
+    """Retrieves all feedback records for authorized HR analytics directly from SQLite."""
     conn = get_connection()
-    df = pd.read_sql_query("SELECT * FROM feedback ORDER BY created_at DESC LIMIT ?", conn, params=(limit,))
+    df = pd.read_sql_query("SELECT * FROM feedback ORDER BY id DESC LIMIT ?", conn, params=(limit,))
     conn.close()
     return df
 
