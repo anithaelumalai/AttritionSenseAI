@@ -7,7 +7,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from utils.database import get_connection
+from utils.database import get_connection, migrate_feedback_table_if_needed
 from utils.email_service import send_feedback_notification_email
 
 CSV_FEEDBACK_PATH = os.path.join(PROJECT_ROOT, "data", "feedback.csv")
@@ -39,12 +39,15 @@ def save_employee_feedback(data: Dict[str, Any]) -> Tuple[bool, str]:
     except (ValueError, TypeError) as e:
         return False, f"Invalid feedback input values: {str(e)}"
 
-    # Step 2: Save to SQLite database FIRST
+    # Step 2: Open SQLite database and ALWAYS ensure schema migration on this connection
     conn = get_connection()
-    cur = conn.cursor()
     feedback_id = None
     
     try:
+        # ALWAYS run migration on this exact database connection BEFORE any insert
+        migrate_feedback_table_if_needed(conn)
+        
+        cur = conn.cursor()
         cur.execute("""
             INSERT INTO feedback (
                 employee_id, is_anonymous,
@@ -102,12 +105,16 @@ def save_employee_feedback(data: Dict[str, Any]) -> Tuple[bool, str]:
 
     # Step 5: Update record's email_status in database
     try:
-        cur.execute("UPDATE feedback SET email_status = ? WHERE id = ?", (final_email_status, feedback_id))
+        cur_update = conn.cursor()
+        cur_update.execute("UPDATE feedback SET email_status = ? WHERE id = ?", (final_email_status, feedback_id))
         conn.commit()
     except Exception:
         pass
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
     # Sync CSV with final email status
     sync_feedback_csv()
@@ -117,6 +124,7 @@ def save_employee_feedback(data: Dict[str, Any]) -> Tuple[bool, str]:
 def sync_feedback_csv():
     """Syncs the entire feedback table to data/feedback.csv."""
     conn = get_connection()
+    migrate_feedback_table_if_needed(conn)
     df = pd.read_sql_query("SELECT * FROM feedback ORDER BY id DESC", conn)
     conn.close()
     os.makedirs(os.path.dirname(CSV_FEEDBACK_PATH), exist_ok=True)
@@ -125,6 +133,7 @@ def sync_feedback_csv():
 def get_feedback_records(limit: int = 200) -> pd.DataFrame:
     """Retrieves all feedback records for authorized HR analytics directly from SQLite."""
     conn = get_connection()
+    migrate_feedback_table_if_needed(conn)
     df = pd.read_sql_query("SELECT * FROM feedback ORDER BY id DESC LIMIT ?", conn, params=(limit,))
     conn.close()
     return df
@@ -170,6 +179,7 @@ def get_feedback_metrics() -> Dict[str, Any]:
 def get_latest_feedback() -> Optional[Dict[str, Any]]:
     """Retrieves the most recent feedback submission for HR Dashboard."""
     conn = get_connection()
+    migrate_feedback_table_if_needed(conn)
     cur = conn.cursor()
     cur.execute("SELECT * FROM feedback ORDER BY id DESC LIMIT 1")
     row = cur.fetchone()
@@ -181,6 +191,7 @@ def get_latest_feedback() -> Optional[Dict[str, Any]]:
 def get_common_concerns(limit: int = 20) -> list:
     """Retrieves recent employee comments/concerns for sentiment review."""
     conn = get_connection()
+    migrate_feedback_table_if_needed(conn)
     cur = conn.cursor()
     cur.execute(
         "SELECT employee_id, is_anonymous, comments, created_at, job_satisfaction, work_life_balance, workload "

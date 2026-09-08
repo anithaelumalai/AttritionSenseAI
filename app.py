@@ -108,7 +108,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Database & Data Setup on Startup
-@st.cache_resource(show_spinner=False)
 def startup_system():
     init_database()
     seed_users_if_needed()

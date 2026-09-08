@@ -16,12 +16,40 @@ def get_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     return conn
 
-def migrate_feedback_table_if_needed(conn: sqlite3.Connection):
+def get_db_path() -> str:
+    """Returns the absolute path to the SQLite database file."""
+    return os.path.abspath(DB_PATH)
+
+def migrate_feedback_table_if_needed(conn: sqlite3.Connection) -> List[str]:
     """
     Safely inspects the feedback table and adds any missing columns using ALTER TABLE.
-    Never drops tables or deletes existing data.
+    Ensures table exists first without dropping or deleting existing data.
+    Returns the list of column names in the feedback table.
     """
     cur = conn.cursor()
+    
+    # 1. Guarantee table exists
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT,
+        is_anonymous INTEGER NOT NULL DEFAULT 0,
+        job_satisfaction INTEGER NOT NULL DEFAULT 3,
+        work_life_balance INTEGER NOT NULL DEFAULT 3,
+        manager_support INTEGER NOT NULL DEFAULT 3,
+        workload INTEGER NOT NULL DEFAULT 3,
+        career_growth INTEGER NOT NULL DEFAULT 3,
+        recognition INTEGER NOT NULL DEFAULT 3,
+        compensation_satisfaction INTEGER NOT NULL DEFAULT 3,
+        intention_to_stay INTEGER NOT NULL DEFAULT 3,
+        comments TEXT,
+        email_status TEXT DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    conn.commit()
+
+    # 2. Inspect existing columns
     cur.execute("PRAGMA table_info(feedback)")
     existing_cols = {row[1]: row for row in cur.fetchall()}
     
@@ -49,6 +77,11 @@ def migrate_feedback_table_if_needed(conn: sqlite3.Connection):
             except sqlite3.OperationalError:
                 pass
     conn.commit()
+
+    # 3. Re-query to return the verified column list
+    cur.execute("PRAGMA table_info(feedback)")
+    final_cols = [row[1] for row in cur.fetchall()]
+    return final_cols
 
 def init_database(db_path: str = DB_PATH):
     """Initializes all SQLite database tables."""
