@@ -89,11 +89,47 @@ STORIES = [
         "Whenever daily tasks feel repetitive or heavy, stepping back to see the larger structure you are shaping makes all the difference."
     ),
     (
-        "The Japanese Bamboo",
+        "The Japanese Moso Bamboo",
         "There is a remarkable species of bamboo known as the moso bamboo. When a gardener plants the seed, nothing visible happens during the entire first year. He waters the patch and tends the soil faithfully, but not a single sprout emerges.\n\n"
         "The second year passes—still nothing. The third and fourth years pass—not an inch above the ground. To an onlooker, it looks like futile work.\n\n"
         "Then, during the fifth year, a green shoot breaks the earth. Within just six weeks, it rockets over eighty feet into the air.\n\n"
         "Did it grow eighty feet in six weeks? Or did it grow eighty feet over five patient years of anchoring deep, invisible root networks beneath the soil? Real workplace skill and personal progress often happen invisibly right until the moment they surge."
+    ),
+    (
+        "The Sticky Note That Wouldn't Stick",
+        "In 1968, a research chemist named Dr. Spencer Silver was working at 3M to develop a super-strong, ultra-durable adhesive for aerospace applications.\n\n"
+        "Instead, he accidentally created something that seemed useless: a light, weak adhesive that gripped surfaces lightly but peeled off cleanly without leaving any residue. For five years, it was considered a failed research experiment.\n\n"
+        "Then, a colleague named Art Fry grew frustrated because his paper bookmarks kept falling out of his church choir hymnal. He remembered Silver's 'failed' adhesive and coated a scrap of yellow paper with it. It stayed perfectly in place, peeled off without tearing the page, and could be reused dozens of times.\n\n"
+        "That apparent failure became the Post-it Note—one of the top five best-selling office products in history. A mistake in execution is often just an invention waiting for the right problem."
+    ),
+    (
+        "The Geese and the V-Formation",
+        "Every autumn, migrating geese fly thousands of miles in a strict V-formation. Aerodynamic studies revealed why: as each bird flaps its wings, it creates an uplift for the bird immediately behind it. By flying in unison, the flock gains over 71% greater flying range than if any bird flew solo.\n\n"
+        "Whenever the lead goose grows tired from cutting through the headwinds, it rotates back into the wing, and another goose immediately moves forward to assume the point position.\n\n"
+        "Even more fascinating, the geese flying in the rear honk continuously to encourage those in front to maintain their speed and stamina.\n\n"
+        "High-performing teams don't rely on a single heroic leader; they share the headwinds, step up when peers need relief, and actively voice encouragement from behind."
+    ),
+    (
+        "The Four-Minute Mile Barrier",
+        "For decades, physiologists, trainers, and athletes believed that running a mile in under four minutes was biologically impossible for the human body. Experts argued that human lungs would burst under the strain.\n\n"
+        "For over a generation, the world record stalled at 4:01. Then, on May 6, 1954, a young medical student named Roger Bannister ran a mile in 3 minutes and 59.4 seconds on a wet track in Oxford.\n\n"
+        "Here is the incredible part: just 46 days later, Australian runner John Landy broke Bannister's record. Within the next 18 months, 45 other athletes had also broken the four-minute mile.\n\n"
+        "Did human physiology evolve overnight? No. What shattered was the mental ceiling of what was possible. When one person breaks an imaginary barrier, they pave the mental runway for everyone else to follow."
+    ),
+    (
+        "The Lobster's Shell",
+        "A lobster is a soft, vulnerable creature that lives inside an inflexible, rigid shell. As the lobster grows, that outer armor becomes increasingly tight and uncomfortable.\n\n"
+        "When the pressure becomes painful enough, the lobster realizes it cannot stay as it is. It retreats under a coral reef to protect itself from predators, sheds its old shell entirely, and remains completely vulnerable while producing a brand-new, much larger shell.\n\n"
+        "It repeats this molt dozens of times throughout its lifetime. The stimulus for the lobster to grow is the discomfort of outgrowing its old container.\n\n"
+        "When you feel stretched, uncomfortable, or challenged in your career, it doesn't mean you are failing—it usually means you have outgrown your previous shell and are expanding."
+    ),
+    (
+        "The Starfish on the Beach",
+        "Early one morning after a fierce Atlantic storm, an elderly traveler walked along an ocean beach covered with thousands of stranded starfish drying under the rising sun.\n\n"
+        "Up ahead, he saw a young woman walking briskly, stopping every few paces to pick up a starfish and toss it back into the crashing waves.\n\n"
+        "The traveler caught up to her and said, 'Look down the shore—there are miles of beach and tens of thousands of them. You can't possibly make a real difference.'\n\n"
+        "The woman paused, picked up another starfish from the sand, and spun it gently into the cool surf. She turned to the man, smiled, and said, 'It made a difference to that one.'\n\n"
+        "When workplace problems feel overwhelming or massive in scale, never discount small acts of kindness and direct help. To the person you assist today, it changes everything."
     ),
     (
         "The Empty Boat",
@@ -110,11 +146,25 @@ STORIES = [
         "The harbor master came the next morning and told the keeper: 'Your generosity was noble, but your primary charge was to keep the beacon shining. If you deplete yourself, the whole harbor goes dark.' Protecting your personal energy isn't selfish—it's what lets you guide others."
     ),
     (
-        "The Master Carpenter and the Knot",
+        "The Master Carpenter and the Storm Knot",
         "A young apprentice was crafting a solid oak conference table and grew upset when he found a dark, swirling knot right in the center of the wood. He grabbed a saw, planning to cut it out and toss the piece aside.\n\n"
         "The master carpenter stopped his hand gently. 'Look closely,' the master said. 'That knot isn't a flaw. That is where the tree fought off a fierce storm thirty years ago and grew back denser to support itself.'\n\n"
         "Together, they carefully planed the timber, polished the swirling whorls with beeswax, and made that knot the centerpiece of the table. When the customer received it, they remarked that the unique pattern of the knot was the most beautiful part of the entire room.\n\n"
         "Workplace setbacks and difficult stretches often feel like unsightly obstacles in the moment, but given time and care, they become the defining stories of your resilience."
+    ),
+    (
+        "The Wright Brothers and the Wind Tunnel",
+        "In the autumn of 1901, Wilbur and Orville Wright returned home from Kitty Hawk devastated. Their state-of-the-art glider had failed, nose-diving repeatedly, and Wilbur confessed to his brother that human flight might take another hundred years.\n\n"
+        "Instead of giving up, they questioned the foundational scientific lift tables published by the world's most renowned aerodynamicists. In their Dayton bicycle shop, they built a six-foot wooden wind tunnel out of an old starch box and a two-bladed fan.\n\n"
+        "Over the next two months, they tested more than 200 distinct miniature wing profiles, measuring drag and lift with delicate balances made of old bicycle spokes. They discovered that the world's standard mathematical tables were fundamentally wrong.\n\n"
+        "With their own empirical data, they built the 1902 glider and achieved controlled powered flight in 1903. Persistence isn't just trying the same thing harder—it's having the curiosity to question assumptions and test your way to the truth."
+    ),
+    (
+        "The Accidental Discovery of Penicillin",
+        "In September 1928, Dr. Alexander Fleming returned to his London laboratory from a two-week family vacation. He had left a stack of staphylococcus bacterial culture plates on his workbench.\n\n"
+        "Upon inspecting the bench, he noticed that one dish had been contaminated by airborne mold spores. In a typical laboratory, a contaminated dish would be immediately disinfected and discarded as wasted effort.\n\n"
+        "Fleming looked closer under the lens. Surrounding the fuzzy colony of green mold, there was a completely clear halo where the staphylococcus bacteria had dissolved and could not survive. Instead of tossing it into the wash basin, he asked a single curious question: 'Why?'\n\n"
+        "That curiosity led to the isolation of penicillin, transforming modern medicine and saving an estimated 200 million lives. Breakthroughs rarely arrive announced—they disguise themselves as unexpected anomalies."
     )
 ]
 
@@ -164,9 +214,18 @@ def detect_user_intent(msg: str) -> Dict[str, Any]:
     # 1. Story detection
     story_phrases = [
         "tell me a story", "tell a story", "short story", "share a story",
-        "story for me", "bedtime story", "read me a story", "give me a story"
+        "story for me", "bedtime story", "read me a story", "give me a story",
+        "need a story", "need a short story", "story sollu", "sollu story",
+        "oru story", "something interesting", "tell me something interesting",
+        "another story", "one more story", "tell another story", "next story",
+        "share another story", "inspire me", "workplace story", "moral story",
+        "motivational story", "tell story"
     ]
-    if any(p in text for p in story_phrases) or text in ["story", "a story", "can you tell me a story", "tell me a story please"]:
+    if any(p in text for p in story_phrases) or text in ["story", "a story", "can you tell me a story", "tell me a story please", "story please"]:
+        return {"intent": "story", "is_question": False, "text": text}
+    if ("story" in text or "stories" in text) and any(w in text for w in ["tell", "share", "give", "need", "sollu", "read", "hear", "listen", "another", "one more", "short", "moral", "good", "nice", "inspire", "next"]):
+        return {"intent": "story", "is_question": False, "text": text}
+    if "something interesting" in text:
         return {"intent": "story", "is_question": False, "text": text}
 
     is_question = text.endswith("?") or any(text.startswith(w) for w in [
@@ -223,10 +282,23 @@ def synthesize_contextual_response(
 
     # 2. STORYTELLING
     if intent == "story":
-        available_stories = [s for s in STORIES if s[0] not in str(recent_responses)]
-        story = available_stories[0] if available_stories else random.choice(STORIES)
-        title, text_content = story
-        return f"Here is a short story for you: **{title}**\n\n{text_content}\n\nI hope that offered a brief breather in your workday. How does that perspective sit with you?"
+        available_stories = [s for s in STORIES if s[0].lower() not in str(recent_responses).lower()]
+        story_pool = available_stories if available_stories else STORIES
+        title, text_content = random.choice(story_pool)
+        
+        follow_ups = [
+            "How does that perspective resonate with what you're experiencing at work today?",
+            "Have you ever run into a situation at work that felt similar to that?",
+            "What would you have done in that situation?",
+            "Does that spark any ideas for navigating your current workload or projects?",
+            "I hope that gave your mind a healthy, quiet breather. How does that perspective sit with you?",
+            "Sometimes a simple shift in angle changes the whole problem. What stands out to you most from that?",
+            "Would you like another short story, or would you like to shift back to what's on your agenda today?"
+        ]
+        fresh_follow_ups = [f for f in follow_ups if f not in str(recent_responses)]
+        follow_up = random.choice(fresh_follow_ups) if fresh_follow_ups else random.choice(follow_ups)
+        
+        return f"Here is a short story for you: **{title}**\n\n{text_content}\n\n{follow_up}"
 
     # History context awareness (detect previous topic & user statement)
     prev_user_msgs = [turn["content"].lower() for turn in history if turn.get("role") == "user"]

@@ -61,26 +61,28 @@ class TestSurveyQuizExit(unittest.TestCase):
         self.assertIsNone(saved["team_collaboration"])
 
     def test_03_weekend_quiz_structure_and_scoring(self):
-        """Verify weekend quiz questions and score recording."""
+        """Verify 10-question weekly quiz structure, clues, and score recording."""
         questions = get_weekend_quiz_questions()
-        self.assertEqual(len(questions), 5)
+        self.assertEqual(len(questions), 10, "Each week must contain 10 high-quality scenario questions")
         for q in questions:
             self.assertIn("question", q)
             self.assertIn("options", q)
             self.assertEqual(len(q["options"]), 4)
             self.assertIn("answer_index", q)
+            self.assertIn("clue", q, "Each question must include a non-spoiler thinking clue")
+            self.assertTrue(len(q["clue"]) > 10, "Clue must be substantive")
             self.assertIn("explanation", q)
 
-        # Test score recording
+        # Test score recording (both backwards-compatible and weekly formats)
         test_emp = "TEST_QUIZ_EMP_1"
-        save_res = save_quiz_score(test_emp, score=4, total_questions=5)
+        save_res = save_quiz_score(test_emp, score=8, total_questions=10)
         self.assertTrue(save_res)
 
         history = get_employee_quiz_scores(test_emp)
         self.assertTrue(len(history) >= 1)
         latest = history[0]
-        self.assertEqual(latest["score"], 4)
-        self.assertEqual(latest["total_questions"], 5)
+        self.assertEqual(latest["score"], 8)
+        self.assertEqual(latest["total_questions"], 10)
 
     def test_04_exit_feedback_null_preservation(self):
         """

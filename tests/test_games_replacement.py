@@ -27,7 +27,9 @@ class TestGamesReplacement(unittest.TestCase):
             "Focus Breathing",
             "Breathing Circle",
             "4-7-8 Focus Breathing",
-            "Workplace Word Scramble"
+            "Workplace Word Scramble",
+            "Digital Zen Garden",
+            "ColorFlow"
         ]
         for term in old_game_terms:
             self.assertNotIn(
@@ -38,15 +40,15 @@ class TestGamesReplacement(unittest.TestCase):
 
     def test_02_new_mind_free_games_present(self):
         """
-        Verify the 3 new games:
+        Verify the 3 approved games:
         1. ZenCode – Coding Relaxation Puzzle
-        2. Digital Zen Garden
-        3. ColorFlow – Harmony Relaxation Puzzle
+        2. Focus Flow
+        3. Calm Puzzle Room
         are present in games_view.py.
         """
         self.assertIn("ZenCode", self.games_content)
-        self.assertIn("Digital Zen Garden", self.games_content)
-        self.assertIn("ColorFlow", self.games_content)
+        self.assertIn("Focus Flow", self.games_content)
+        self.assertIn("Calm Puzzle Room", self.games_content)
 
     def test_03_games_do_not_import_or_affect_prediction(self):
         """

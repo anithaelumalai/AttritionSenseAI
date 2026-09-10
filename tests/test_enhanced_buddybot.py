@@ -74,5 +74,60 @@ def test_enhanced_buddybot():
     print(f"Verified {len(all_responses)} unique, non-cliché, context-aware responses.")
     print("=" * 70)
 
+def test_buddybot_storytelling():
+    print("\n" + "=" * 70)
+    print("TESTING BUDDYBOT DIVERSE STORYTELLING ENGINE")
+    print("=" * 70)
+
+    from utils.chatbot import STORIES
+    known_titles = [s[0].lower() for s in STORIES]
+    print(f"Total curated workplace stories available: {len(STORIES)}")
+    assert len(STORIES) >= 12, "Must contain at least 12 structured workplace stories"
+
+    emp_id = "test_user_story"
+    clear_employee_chat_history(emp_id)
+
+    story_prompts = [
+        "story sollu",
+        "tell me something interesting",
+        "need a short story",
+        "another story please"
+    ]
+
+    history = []
+    received_titles = []
+
+    for prompt in story_prompts:
+        print(f"\nUser prompt: '{prompt}'")
+        reply = get_buddybot_response(prompt, emp_id, history)
+        print(f"BuddyBot reply excerpt:\n{reply[:120]}...\n---")
+
+        # 1. Must not contain cliches
+        for forbidden in FORBIDDEN_PHRASES:
+            assert forbidden not in reply.lower(), f"Forbidden phrase found in story reply: {forbidden}"
+
+        # 2. Must identify a known story title
+        matched_title = next((t for t in known_titles if t in reply.lower()), None)
+        assert matched_title is not None, f"Response did not contain a known story title from the repository: {reply[:100]}"
+        print(f"Matched Story: '{matched_title}'")
+
+        # 3. Must not repeat the immediately preceding story
+        if received_titles:
+            assert matched_title != received_titles[-1], f"Story repeated consecutively: {matched_title}"
+        received_titles.append(matched_title)
+
+        # 4. Must end with an engaging follow-up question
+        assert reply.strip().endswith("?"), "Story must conclude with an interactive reflection question"
+
+        # Update history
+        history.append({"role": "user", "content": prompt})
+        history.append({"role": "assistant", "content": reply})
+
+    print("\n" + "=" * 70)
+    print(f"STORYTELLING VERIFIED: Received distinct stories: {received_titles}")
+    print("ALL STORY DETECTION & DIVERSITY TESTS PASSED!")
+    print("=" * 70)
+
 if __name__ == "__main__":
     test_enhanced_buddybot()
+    test_buddybot_storytelling()

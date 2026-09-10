@@ -89,16 +89,13 @@ def render_hr_dashboard():
         high_growth_count = len(workforce_df[workforce_df["GrowthStatus"] == GROWTH_STATUS_HIGH])
         st.metric("High Growth Potential Total", f"{high_growth_count}", "Talent Asset Pool")
     with p_col3:
-        st.markdown(f"""
-            <div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; padding: 0.8rem 1rem;">
-                <p style="margin: 0; color: #991b1b; font-size: 0.88rem; font-weight: 600;">
-                    🛡️ Immediate Retention Protocol:
-                </p>
-                <p style="margin: 0.2rem 0 0 0; color: #7f1d1d; font-size: 0.82rem;">
-                    Identified {priority_count} critical personnel. Dispatch proactive stay interviews, review compensation competitiveness, and mitigate workload bottlenecks.
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+        protocol_html = (
+            f'<div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; padding: 0.8rem 1rem;">'
+            f'<p style="margin: 0; color: #991b1b; font-size: 0.88rem; font-weight: 600;">🛡️ Immediate Retention Protocol:</p>'
+            f'<p style="margin: 0.2rem 0 0 0; color: #7f1d1d; font-size: 0.82rem;">Identified {priority_count} critical personnel. Dispatch proactive stay interviews, review compensation competitiveness, and mitigate workload bottlenecks.</p>'
+            f'</div>'
+        )
+        st.markdown(protocol_html, unsafe_allow_html=True)
 
     # Top Priority Retention Cards
     st.markdown("#### 🎯 Priority Retention Action List")
@@ -108,25 +105,26 @@ def render_hr_dashboard():
     for idx, (_, row) in enumerate(top_priority_cards.iterrows()):
         with card_cols[idx]:
             emp_id = row["EmployeeNumber"]
-            st.markdown(f"""
-                <div style="background: white; border: 1px solid #e2e8f0; border-top: 3px solid #ef4444; border-radius: 8px; padding: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                        <span style="font-weight: 700; color: #1e3a8a; font-size: 0.9rem;">#{emp_id}</span>
-                        <span style="background: #fee2e2; color: #991b1b; padding: 1px 6px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;">Priority</span>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #475569; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{row['JobRole']}</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">{row['Department']}</div>
-                    <hr style="margin: 0.4rem 0; border: 0; border-top: 1px solid #f1f5f9;" />
-                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem;">
-                        <span style="color: #64748b;">Risk:</span>
-                        <span style="color: #dc2626; font-weight: 700;">{row['RiskScore']}/100</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem;">
-                        <span style="color: #64748b;">Confidence:</span>
-                        <span style="color: #0369a1; font-weight: 600;">{row['ConfidenceFormatted']}</span>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            card_html = (
+                f'<div style="background: white; border: 1px solid #e2e8f0; border-top: 3px solid #ef4444; border-radius: 8px; padding: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0.5rem;">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">'
+                f'<span style="font-weight: 700; color: #1e3a8a; font-size: 0.9rem;">#{emp_id}</span>'
+                f'<span style="background: #fee2e2; color: #991b1b; padding: 1px 6px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;">Priority</span>'
+                f'</div>'
+                f'<div style="font-size: 0.8rem; color: #475569; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{row["JobRole"]}</div>'
+                f'<div style="font-size: 0.75rem; color: #64748b;">{row["Department"]}</div>'
+                f'<hr style="margin: 0.4rem 0; border: 0; border-top: 1px solid #f1f5f9;" />'
+                f'<div style="display: flex; justify-content: space-between; font-size: 0.76rem;">'
+                f'<span style="color: #64748b;">Risk:</span>'
+                f'<span style="color: #dc2626; font-weight: 700;">{row["RiskScore"]}/100</span>'
+                f'</div>'
+                f'<div style="display: flex; justify-content: space-between; font-size: 0.76rem;">'
+                f'<span style="color: #64748b;">Confidence:</span>'
+                f'<span style="color: #0369a1; font-weight: 600;">{row["ConfidenceFormatted"]}</span>'
+                f'</div>'
+                f'</div>'
+            )
+            st.markdown(card_html, unsafe_allow_html=True)
             if st.button("Notify HR ✉️", key=f"btn_notify_pr_{emp_id}", use_container_width=True):
                 res = record_priority_retention_alert(
                     emp_id,

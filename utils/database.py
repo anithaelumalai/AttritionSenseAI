@@ -124,6 +124,44 @@ def migrate_prediction_history_table_if_needed(conn: sqlite3.Connection) -> List
     cur.execute("PRAGMA table_info(prediction_history)")
     return [row[1] for row in cur.fetchall()]
 
+def migrate_quiz_scores_table_if_needed(conn: sqlite3.Connection) -> List[str]:
+    """
+    Safely inspects quiz_scores table and adds missing columns (week, answers_json, correct_answers_json).
+    """
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS quiz_scores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        total_questions INTEGER NOT NULL,
+        category TEXT DEFAULT 'Mindfulness & Workplace',
+        week INTEGER DEFAULT 1,
+        answers_json TEXT,
+        correct_answers_json TEXT,
+        quiz_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    conn.commit()
+
+    cur.execute("PRAGMA table_info(quiz_scores)")
+    existing_cols = {row[1]: row for row in cur.fetchall()}
+    
+    col_definitions = {
+        "week": "ALTER TABLE quiz_scores ADD COLUMN week INTEGER DEFAULT 1",
+        "answers_json": "ALTER TABLE quiz_scores ADD COLUMN answers_json TEXT",
+        "correct_answers_json": "ALTER TABLE quiz_scores ADD COLUMN correct_answers_json TEXT"
+    }
+    for col_name, alter_stmt in col_definitions.items():
+        if col_name not in existing_cols:
+            try:
+                cur.execute(alter_stmt)
+            except sqlite3.OperationalError:
+                pass
+    conn.commit()
+    cur.execute("PRAGMA table_info(quiz_scores)")
+    return [row[1] for row in cur.fetchall()]
+
 def init_database(db_path: str = DB_PATH):
     """Initializes all SQLite database tables."""
     conn = get_connection(db_path)
@@ -218,9 +256,13 @@ def init_database(db_path: str = DB_PATH):
         score INTEGER NOT NULL,
         total_questions INTEGER NOT NULL,
         category TEXT DEFAULT 'Mindfulness & Workplace',
+        week INTEGER DEFAULT 1,
+        answers_json TEXT,
+        correct_answers_json TEXT,
         quiz_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
+    migrate_quiz_scores_table_if_needed(conn)
 
     # 7. Exit Feedback table (Optional exit interview)
     cur.execute("""

@@ -114,27 +114,33 @@ def render_employee_search_prediction():
     confidence = pred.get("confidence", 85.0)
     is_priority = pred.get("is_priority_retention", False)
     
-    st.markdown(f"""
-        <div style="background-color: {color}15; border: 2px solid {color}; border-radius: 10px; padding: 1.2rem; margin: 1rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">
-            <div>
-                <div style="font-size: 0.85rem; font-weight: bold; text-transform: uppercase; color: {color};">Executive Risk Assessment</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: {color};">{risk_level} — {pred['prediction']}</div>
-                <div style="font-size: 0.95rem; color: #475569; margin-top: 0.2rem;">
-                    Risk Score: <b>{risk_score} / 100</b> | Attrition Probability: <b>{prob_pct}%</b> | Confidence: <b>{confidence}%</b>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
-                <div style="background: white; border: 1px solid #cbd5e1; padding: 0.4rem 0.8rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Growth Status</div>
-                    <div style="font-size: 0.95rem; font-weight: bold; color: #0284c7;">{growth_status}</div>
-                </div>
-                {'<div style="background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">⚠️ Priority Retention</div>' if is_priority else ''}
-                <div style="background: {color}; color: white; padding: 0.5rem 1.2rem; border-radius: 25px; font-weight: bold; font-size: 1.1rem;">
-                    {risk_score}/100
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    priority_badge_html = (
+        f'<div style="background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">⚠️ Priority Retention</div>'
+        if is_priority else ''
+    )
+
+    banner_html = (
+        f'<div style="background-color: {color}15; border: 2px solid {color}; border-radius: 10px; padding: 1.2rem; margin: 1rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">'
+        f'<div>'
+        f'<div style="font-size: 0.85rem; font-weight: bold; text-transform: uppercase; color: {color};">Executive Risk Assessment</div>'
+        f'<div style="font-size: 1.8rem; font-weight: bold; color: {color};">{risk_level} — {pred["prediction"]}</div>'
+        f'<div style="font-size: 0.95rem; color: #475569; margin-top: 0.2rem;">'
+        f'Risk Score: <b>{risk_score} / 100</b> | Attrition Probability: <b>{prob_pct}%</b> | Confidence: <b>{confidence}%</b>'
+        f'</div>'
+        f'</div>'
+        f'<div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">'
+        f'<div style="background: white; border: 1px solid #cbd5e1; padding: 0.4rem 0.8rem; border-radius: 8px; text-align: center;">'
+        f'<div style="font-size: 0.72rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Growth Status</div>'
+        f'<div style="font-size: 0.95rem; font-weight: bold; color: #0284c7;">{growth_status}</div>'
+        f'</div>'
+        f'{priority_badge_html}'
+        f'<div style="background: {color}; color: white; padding: 0.5rem 1.2rem; border-radius: 25px; font-weight: bold; font-size: 1.1rem; min-width: 90px; text-align: center;">'
+        f'{risk_score}/100'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(banner_html, unsafe_allow_html=True)
     
     # Two Columns: Risk Drivers & Targeted Recommendations
     r_col1, r_col2 = st.columns([1, 1])
@@ -146,15 +152,16 @@ def render_employee_search_prediction():
             for f in factors:
                 badge_bg = "#fee2e2" if f["severity"] == "High" else "#fef3c7" if f["severity"] == "Medium" else "#f1f5f9"
                 badge_fg = "#991b1b" if f["severity"] == "High" else "#92400e" if f["severity"] == "Medium" else "#475569"
-                st.markdown(f"""
-                    <div style="border-left: 4px solid {badge_fg}; background: #f8fafc; padding: 0.8rem 1rem; border-radius: 4px; margin-bottom: 0.7rem;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <strong style="color: #1e293b;">{f['factor']}</strong>
-                            <span style="background: {badge_bg}; color: {badge_fg}; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 12px;">{f['severity']}</span>
-                        </div>
-                        <p style="margin: 0.3rem 0 0 0; color: #64748b; font-size: 0.85rem;">{f['detail']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
+                driver_card_html = (
+                    f'<div style="border-left: 4px solid {badge_fg}; background: #f8fafc; padding: 0.8rem 1rem; border-radius: 4px; margin-bottom: 0.7rem;">'
+                    f'<div style="display: flex; justify-content: space-between;">'
+                    f'<strong style="color: #1e293b;">{f["factor"]}</strong>'
+                    f'<span style="background: {badge_bg}; color: {badge_fg}; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 12px;">{f["severity"]}</span>'
+                    f'</div>'
+                    f'<p style="margin: 0.3rem 0 0 0; color: #64748b; font-size: 0.85rem;">{f["detail"]}</p>'
+                    f'</div>'
+                )
+                st.markdown(driver_card_html, unsafe_allow_html=True)
         else:
             st.success("✅ No critical attrition drivers identified for this employee. Engagement indicators remain healthy.")
 
@@ -162,17 +169,18 @@ def render_employee_search_prediction():
         st.markdown("#### 💡 Prescriptive Retention Action Plan")
         if recs:
             for r in recs:
-                st.markdown(f"""
-                    <div style="border: 1px solid #e2e8f0; background: white; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 0.7rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.8rem; color: #0284c7; font-weight: bold; text-transform: uppercase;">{r['category']}</span>
-                            <span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{r['priority']}</span>
-                        </div>
-                        <strong style="color: #0f172a; font-size: 0.95rem;">{r['title']}</strong>
-                        <p style="margin: 0.3rem 0 0.3rem 0; color: #475569; font-size: 0.85rem;">{r['action']}</p>
-                        <div style="font-size: 0.75rem; color: #94a3b8;"><b>Responsible:</b> {r['owner']}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                rec_card_html = (
+                    f'<div style="border: 1px solid #e2e8f0; background: white; padding: 0.8rem 1rem; border-radius: 6px; margin-bottom: 0.7rem;">'
+                    f'<div style="display: flex; justify-content: space-between; align-items: center;">'
+                    f'<span style="font-size: 0.8rem; color: #0284c7; font-weight: bold; text-transform: uppercase;">{r["category"]}</span>'
+                    f'<span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{r["priority"]}</span>'
+                    f'</div>'
+                    f'<strong style="color: #0f172a; font-size: 0.95rem;">{r["title"]}</strong>'
+                    f'<p style="margin: 0.3rem 0 0.3rem 0; color: #475569; font-size: 0.85rem;">{r["action"]}</p>'
+                    f'<div style="font-size: 0.75rem; color: #94a3b8;"><b>Responsible:</b> {r["owner"]}</div>'
+                    f'</div>'
+                )
+                st.markdown(rec_card_html, unsafe_allow_html=True)
         else:
             st.info("Continue standard quarterly development touchpoints and peer recognition.")
 
