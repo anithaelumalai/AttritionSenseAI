@@ -170,6 +170,72 @@ Please log in to the HR Portal to view aggregated workplace sentiment analytics.
         err_msg = str(e).replace(cfg.get("password", "********"), "********")
         return False, f"Feedback saved, but HR email notification could not be dispatched: {err_msg[:120]}"
 
+def send_priority_retention_alert_email(emp_data: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Sends an HR notification email for Priority Retention employees:
+    High Growth Potential + High Attrition Risk.
+    Gracefully handles unconfigured SMTP without false positives.
+    """
+    cfg = get_smtp_config()
+    
+    if not cfg.get("host") or not cfg.get("user") or not cfg.get("password"):
+        return False, "Priority Retention alert recorded, but HR email notification is not configured."
+
+    emp_id = emp_data.get("employee_id", "N/A")
+    dept = emp_data.get("department", "N/A")
+    role = emp_data.get("job_role", "N/A")
+    confidence = emp_data.get("confidence", "N/A")
+    prob = emp_data.get("attrition_probability", "N/A")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    body = f"""Hello HR Leadership,
+
+⚠️ PRIORITY RETENTION ALERT DETECTED
+
+AttritionSense AI has flagged a high-value employee requiring proactive retention attention.
+
+Employee Profile:
+- Employee ID: #{emp_id}
+- Department: {dept}
+- Job Role: {role}
+- Evaluation Date: {timestamp}
+
+AI Decision-Support Analysis:
+- Growth / Value Status: High Growth Potential
+- Attrition Risk: High Risk (Probability: {prob})
+- Prediction Confidence: {confidence}%
+
+Recommended Immediate Actions:
+1. Schedule a confidential 1-on-1 career pathing session.
+2. Review compensation alignment, equity incentives, and project recognition.
+3. Address workload balance and team environment factors.
+
+---
+Note: This alert is intended as decision-support guidance for HR leaders and people managers.
+Please log in to the AttritionSense AI HR Portal to review full risk factor breakdown.
+"""
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = cfg["user"]
+        msg["To"] = cfg["hr_email"]
+        msg["Subject"] = f"⚠️ Priority Retention Alert: Employee #{emp_id} ({role})"
+        msg.attach(MIMEText(body, "plain"))
+        
+        with smtplib.SMTP(cfg["host"], cfg["port"], timeout=10) as server:
+            server.starttls()
+            server.login(cfg["user"], cfg["password"])
+            server.send_message(msg)
+            
+        return True, f"Priority Retention notification email sent to HR ({cfg['hr_email']})."
+    except smtplib.SMTPAuthenticationError:
+        return False, "Alert logged, but HR email notification failed: Gmail authentication error. Please verify your App Password."
+    except (smtplib.SMTPConnectError, socket.error, OSError) as e:
+        return False, f"Alert logged, but HR email notification failed: Unable to connect to SMTP server ({type(e).__name__})."
+    except Exception as e:
+        err_msg = str(e).replace(cfg.get("password", "********"), "********")
+        return False, f"Alert logged, but HR email notification could not be dispatched: {err_msg[:120]}"
+
 def send_test_email(recipient_override: Optional[str] = None) -> Tuple[bool, str]:
     """
     Safe test-email utility for development and verification.

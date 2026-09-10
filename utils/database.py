@@ -83,6 +83,47 @@ def migrate_feedback_table_if_needed(conn: sqlite3.Connection) -> List[str]:
     final_cols = [row[1] for row in cur.fetchall()]
     return final_cols
 
+def migrate_prediction_history_table_if_needed(conn: sqlite3.Connection) -> List[str]:
+    """
+    Safely inspects prediction_history table and adds missing columns (growth_status, confidence, priority_retention).
+    """
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS prediction_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT NOT NULL,
+        prediction TEXT NOT NULL,
+        probability REAL NOT NULL,
+        risk_score REAL NOT NULL,
+        risk_level TEXT NOT NULL,
+        risk_factors TEXT NOT NULL,
+        recommendations TEXT NOT NULL,
+        growth_status TEXT,
+        confidence REAL,
+        priority_retention INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    conn.commit()
+
+    cur.execute("PRAGMA table_info(prediction_history)")
+    existing_cols = {row[1]: row for row in cur.fetchall()}
+    
+    col_definitions = {
+        "growth_status": "ALTER TABLE prediction_history ADD COLUMN growth_status TEXT",
+        "confidence": "ALTER TABLE prediction_history ADD COLUMN confidence REAL",
+        "priority_retention": "ALTER TABLE prediction_history ADD COLUMN priority_retention INTEGER DEFAULT 0"
+    }
+    for col_name, alter_stmt in col_definitions.items():
+        if col_name not in existing_cols:
+            try:
+                cur.execute(alter_stmt)
+            except sqlite3.OperationalError:
+                pass
+    conn.commit()
+    cur.execute("PRAGMA table_info(prediction_history)")
+    return [row[1] for row in cur.fetchall()]
+
 def init_database(db_path: str = DB_PATH):
     """Initializes all SQLite database tables."""
     conn = get_connection(db_path)
@@ -131,10 +172,9 @@ def init_database(db_path: str = DB_PATH):
     );
     """)
 
-    # Non-destructive schema migration check for existing databases
+    # Non-destructive schema migration check for feedback table
     migrate_feedback_table_if_needed(conn)
 
-    
     # 4. Prediction history table (HR)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS prediction_history (
@@ -146,6 +186,67 @@ def init_database(db_path: str = DB_PATH):
         risk_level TEXT NOT NULL,
         risk_factors TEXT NOT NULL,
         recommendations TEXT NOT NULL,
+        growth_status TEXT,
+        confidence REAL,
+        priority_retention INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    migrate_prediction_history_table_if_needed(conn)
+
+    # 5. Surveys table (Employee Optional Workplace Survey)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS surveys (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT NOT NULL,
+        work_environment INTEGER,
+        team_collaboration INTEGER,
+        culture_alignment INTEGER,
+        growth_opportunities INTEGER,
+        tools_resources INTEGER,
+        suggestions TEXT,
+        is_skipped INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 6. Quiz scores table (Weekend Quiz - Strictly private, never for HR evaluation)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS quiz_scores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        total_questions INTEGER NOT NULL,
+        category TEXT DEFAULT 'Mindfulness & Workplace',
+        quiz_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 7. Exit Feedback table (Optional exit interview)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS exit_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT NOT NULL,
+        primary_reason TEXT,
+        experience_rating INTEGER,
+        recommend_company INTEGER,
+        handover_status TEXT,
+        detailed_feedback TEXT,
+        is_skipped INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 8. Retention Alerts table (HR Priority Retention tracking)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS retention_alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id TEXT NOT NULL,
+        growth_status TEXT NOT NULL,
+        attrition_risk TEXT NOT NULL,
+        notification_type TEXT NOT NULL,
+        notification_status TEXT NOT NULL,
+        alert_acknowledged INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)

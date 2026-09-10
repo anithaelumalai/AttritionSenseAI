@@ -17,16 +17,16 @@ from utils.ml_pipeline import (
 def determine_risk_level(risk_score: float) -> Tuple[str, str]:
     """
     Classifies risk score into standard documented tiers:
-    0–39  -> LOW RISK (Green)
-    40–69 -> MEDIUM RISK (Amber/Orange)
-    70–100 -> HIGH RISK (Red)
+    0–39  -> Low Risk (Green)
+    40–69 -> Medium Risk (Amber/Orange)
+    70–100 -> High Risk (Red)
     """
     if risk_score >= 70.0:
-        return "HIGH RISK", "#e63946"  # Coral Red
+        return "High Risk", "#e63946"  # Coral Red
     elif risk_score >= 40.0:
-        return "MEDIUM RISK", "#f4a261"  # Amber Orange
+        return "Medium Risk", "#f4a261"  # Amber Orange
     else:
-        return "LOW RISK", "#2a9d8f"  # Emerald Green
+        return "Low Risk", "#2a9d8f"  # Emerald Green
 
 def identify_risk_factors(emp_record: Dict[str, Any], df_context: Optional[pd.DataFrame] = None) -> List[Dict[str, Any]]:
     """
@@ -160,6 +160,16 @@ def predict_employee_attrition(emp_record: Dict[str, Any], df_context: Optional[
     
     # Extract concrete risk drivers
     factors = identify_risk_factors(emp_record, df_context)
+
+    # Growth Status and Confidence analysis
+    from utils.ai_analysis import (
+        evaluate_employee_growth_status,
+        evaluate_prediction_confidence,
+        check_priority_retention
+    )
+    confidence = evaluate_prediction_confidence(prob)
+    growth_status = evaluate_employee_growth_status(emp_record)
+    is_priority, priority_label = check_priority_retention(growth_status, risk_level)
     
     return {
         "employee_id": str(emp_record.get("EmployeeNumber", "")),
@@ -169,5 +179,9 @@ def predict_employee_attrition(emp_record: Dict[str, Any], df_context: Optional[
         "risk_score": risk_score,
         "risk_level": risk_level,
         "color_hex": color_hex,
-        "risk_factors": factors
+        "risk_factors": factors,
+        "growth_status": growth_status,
+        "confidence": confidence,
+        "priority_retention": priority_label,
+        "is_priority_retention": is_priority
     }

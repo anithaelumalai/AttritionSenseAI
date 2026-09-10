@@ -45,8 +45,8 @@ def generate_pdf_report(
     border_color = colors.HexColor("#cbd5e1")
     
     # Determine Risk Banner Color
-    risk_level = pred_result.get("risk_level", "LOW RISK")
-    if risk_level == "HIGH RISK":
+    risk_level = str(pred_result.get("risk_level", "LOW RISK")).upper()
+    if "HIGH" in risk_level:
         risk_banner_bg = colors.HexColor("#fee2e2")
         risk_banner_text = colors.HexColor("#991b1b")
         risk_badge_border = colors.HexColor("#f87171")

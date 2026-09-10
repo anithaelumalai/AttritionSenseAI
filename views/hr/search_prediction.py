@@ -90,7 +90,10 @@ def render_employee_search_prediction():
                 risk_score=pred_result["risk_score"],
                 risk_level=pred_result["risk_level"],
                 risk_factors=pred_result["risk_factors"],
-                recommendations=recs
+                recommendations=recs,
+                growth_status=pred_result.get("growth_status"),
+                confidence=pred_result.get("confidence"),
+                priority_retention=1 if pred_result.get("is_priority_retention") else 0
             )
             
             st.session_state[pred_key] = {
@@ -107,6 +110,9 @@ def render_employee_search_prediction():
     risk_score = pred["risk_score"]
     prob_pct = round(pred["attrition_probability"] * 100, 1)
     color = pred["color_hex"]
+    growth_status = pred.get("growth_status", "Stable Contributor")
+    confidence = pred.get("confidence", 85.0)
+    is_priority = pred.get("is_priority_retention", False)
     
     st.markdown(f"""
         <div style="background-color: {color}15; border: 2px solid {color}; border-radius: 10px; padding: 1.2rem; margin: 1rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">
@@ -114,10 +120,15 @@ def render_employee_search_prediction():
                 <div style="font-size: 0.85rem; font-weight: bold; text-transform: uppercase; color: {color};">Executive Risk Assessment</div>
                 <div style="font-size: 1.8rem; font-weight: bold; color: {color};">{risk_level} — {pred['prediction']}</div>
                 <div style="font-size: 0.95rem; color: #475569; margin-top: 0.2rem;">
-                    Risk Score: <b>{risk_score} / 100</b> | Attrition Probability: <b>{prob_pct}%</b>
+                    Risk Score: <b>{risk_score} / 100</b> | Attrition Probability: <b>{prob_pct}%</b> | Confidence: <b>{confidence}%</b>
                 </div>
             </div>
-            <div style="text-align: right;">
+            <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+                <div style="background: white; border: 1px solid #cbd5e1; padding: 0.4rem 0.8rem; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Growth Status</div>
+                    <div style="font-size: 0.95rem; font-weight: bold; color: #0284c7;">{growth_status}</div>
+                </div>
+                {'<div style="background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">⚠️ Priority Retention</div>' if is_priority else ''}
                 <div style="background: {color}; color: white; padding: 0.5rem 1.2rem; border-radius: 25px; font-weight: bold; font-size: 1.1rem;">
                     {risk_score}/100
                 </div>

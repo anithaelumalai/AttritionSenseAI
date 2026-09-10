@@ -25,7 +25,7 @@ def render_prediction_history():
         
     filtered = df_hist.copy()
     if risk_filter != "All":
-        filtered = filtered[filtered["risk_level"] == risk_filter]
+        filtered = filtered[filtered["risk_level"].str.upper() == risk_filter.upper()]
     if search_emp.strip():
         filtered = filtered[filtered["employee_id"].astype(str).str.contains(search_emp.strip())]
 

@@ -118,7 +118,6 @@ startup_system()
 # 3. Session State Initialization
 init_session()
 
-# Import view renderers
 from views.employee.login import render_employee_login
 from views.employee.dashboard import render_employee_dashboard
 from views.employee.profile import render_employee_profile
@@ -126,6 +125,9 @@ from views.employee.buddybot_view import render_buddybot_view
 from views.employee.games_view import render_games_view
 from views.employee.feedback_view import render_feedback_view
 from views.employee.personal_info_view import render_personal_info_view
+from views.employee.survey_view import render_survey_view
+from views.employee.quiz_view import render_quiz_view
+from views.employee.exit_feedback_view import render_exit_feedback_view
 
 from views.hr.login import render_hr_login
 from views.hr.dashboard import render_hr_dashboard
@@ -229,9 +231,12 @@ elif is_employee():
         emp_nav_options = {
             "employee_dashboard": "🏠 My Dashboard",
             "employee_profile": "👤 My Profile",
-            "buddybot": "🤖 BuddyBot",
-            "games": "🎮 Mini Games",
+            "survey": "📋 Optional Survey",
+            "quiz": "🧠 Weekend Quiz",
             "feedback": "💬 Employee Feedback",
+            "exit_feedback": "🚪 Exit Feedback",
+            "buddybot": "🤖 BuddyBot",
+            "games": "🎮 Mind-Free Games",
             "personal_info": "📊 My Personal Information"
         }
         
@@ -263,12 +268,18 @@ elif is_employee():
         render_employee_dashboard()
     elif st.session_state.active_page == "employee_profile":
         render_employee_profile()
+    elif st.session_state.active_page == "survey":
+        render_survey_view()
+    elif st.session_state.active_page == "quiz":
+        render_quiz_view()
+    elif st.session_state.active_page == "feedback":
+        render_feedback_view()
+    elif st.session_state.active_page == "exit_feedback":
+        render_exit_feedback_view()
     elif st.session_state.active_page == "buddybot":
         render_buddybot_view()
     elif st.session_state.active_page == "games":
         render_games_view()
-    elif st.session_state.active_page == "feedback":
-        render_feedback_view()
     elif st.session_state.active_page == "personal_info":
         render_personal_info_view()
 

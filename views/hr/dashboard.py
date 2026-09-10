@@ -1,9 +1,22 @@
 import streamlit as st
-from utils.analytics import compute_overall_dataset_metrics, create_risk_distribution_donut, create_attrition_by_department_chart
-from utils.data_loader import load_employee_dataset
-from utils.ml_pipeline import load_trained_model, NUMERICAL_FEATURES, CATEGORICAL_FEATURES
-from utils.feedback import get_feedback_metrics, get_latest_feedback
 import pandas as pd
+from utils.analytics import (
+    compute_overall_dataset_metrics,
+    create_risk_distribution_donut,
+    create_attrition_by_department_chart
+)
+from utils.feedback import get_feedback_metrics, get_latest_feedback
+from utils.ai_analysis import (
+    get_workforce_ai_analysis,
+    record_priority_retention_alert,
+    GROWTH_STATUS_HIGH,
+    GROWTH_STATUS_STABLE,
+    GROWTH_STATUS_SUPPORT,
+    RISK_HIGH,
+    RISK_MEDIUM,
+    RISK_LOW,
+    PRIORITY_RETENTION_LABEL
+)
 
 def render_hr_dashboard():
     st.markdown("""
@@ -20,8 +33,9 @@ def render_hr_dashboard():
         </div>
     """, unsafe_allow_html=True)
     
-    with st.spinner("Computing workforce risk indices..."):
+    with st.spinner("Computing workforce risk indices & AI evaluations..."):
         metrics = compute_overall_dataset_metrics()
+        workforce_df = get_workforce_ai_analysis()
         
     # Top Row: 6 KPI Cards
     k1, k2, k3, k4, k5, k6 = st.columns(6)
@@ -51,8 +65,160 @@ def render_hr_dashboard():
         st.plotly_chart(dept_fig, use_container_width=True)
 
     st.markdown("---")
+
+    # =========================================================================
+    # PHASE 6: PRIORITY RETENTION ALERT CENTER
+    # =========================================================================
+    st.markdown("### ⚠️ Priority Retention Alert Center")
+    st.markdown("""
+        <p style="color: #64748b; margin-top: -0.5rem;">
+            Proactive retention alerts triggered <strong>exclusively</strong> when 
+            <span style="color: #0369a1; font-weight: 600;">High Growth Potential</span> coincides with 
+            <span style="color: #dc2626; font-weight: 600;">High Risk</span>. 
+            All other combinations are classified as <em>No Priority Retention</em>.
+        </p>
+    """, unsafe_allow_html=True)
+
+    priority_df = workforce_df[workforce_df["IsPriorityRetention"] == True].copy()
+    priority_count = len(priority_df)
+
+    p_col1, p_col2, p_col3 = st.columns([1, 1, 2])
+    with p_col1:
+        st.metric("Priority Retention Cases", f"{priority_count}", f"{(priority_count/len(workforce_df)*100):.1f}% of workforce", delta_color="inverse")
+    with p_col2:
+        high_growth_count = len(workforce_df[workforce_df["GrowthStatus"] == GROWTH_STATUS_HIGH])
+        st.metric("High Growth Potential Total", f"{high_growth_count}", "Talent Asset Pool")
+    with p_col3:
+        st.markdown(f"""
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; padding: 0.8rem 1rem;">
+                <p style="margin: 0; color: #991b1b; font-size: 0.88rem; font-weight: 600;">
+                    🛡️ Immediate Retention Protocol:
+                </p>
+                <p style="margin: 0.2rem 0 0 0; color: #7f1d1d; font-size: 0.82rem;">
+                    Identified {priority_count} critical personnel. Dispatch proactive stay interviews, review compensation competitiveness, and mitigate workload bottlenecks.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # Top Priority Retention Cards
+    st.markdown("#### 🎯 Priority Retention Action List")
+    top_priority_cards = priority_df.sort_values(by="RiskScore", ascending=False).head(5)
     
-    # Second Row (B): New Employee Feedback Section
+    card_cols = st.columns(min(len(top_priority_cards), 5) or 1)
+    for idx, (_, row) in enumerate(top_priority_cards.iterrows()):
+        with card_cols[idx]:
+            emp_id = row["EmployeeNumber"]
+            st.markdown(f"""
+                <div style="background: white; border: 1px solid #e2e8f0; border-top: 3px solid #ef4444; border-radius: 8px; padding: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                        <span style="font-weight: 700; color: #1e3a8a; font-size: 0.9rem;">#{emp_id}</span>
+                        <span style="background: #fee2e2; color: #991b1b; padding: 1px 6px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;">Priority</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #475569; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{row['JobRole']}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">{row['Department']}</div>
+                    <hr style="margin: 0.4rem 0; border: 0; border-top: 1px solid #f1f5f9;" />
+                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem;">
+                        <span style="color: #64748b;">Risk:</span>
+                        <span style="color: #dc2626; font-weight: 700;">{row['RiskScore']}/100</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem;">
+                        <span style="color: #64748b;">Confidence:</span>
+                        <span style="color: #0369a1; font-weight: 600;">{row['ConfidenceFormatted']}</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("Notify HR ✉️", key=f"btn_notify_pr_{emp_id}", use_container_width=True):
+                res = record_priority_retention_alert(
+                    emp_id,
+                    GROWTH_STATUS_HIGH,
+                    RISK_HIGH,
+                    {
+                        "department": row["Department"],
+                        "job_role": row["JobRole"],
+                        "confidence": row["PredictionConfidence"],
+                        "probability": row["AttritionProbability"]
+                    }
+                )
+                if res["status"] == "duplicate":
+                    st.warning(f"⚠️ {res['message']}")
+                elif res["status"] == "sent":
+                    st.success(f"✅ {res['message']}")
+                else:
+                    st.info(f"ℹ️ {res['message']}")
+
+    st.markdown("---")
+
+    # =========================================================================
+    # PHASE 6: FULL WORKFORCE AI ANALYSIS ROSTER (ALL 1,470 EMPLOYEES)
+    # =========================================================================
+    st.markdown("### 🌐 Complete Workforce AI Roster (All 1,470 Employees)")
+    st.caption("Comprehensive decision-support analysis for every verified employee in the organization.")
+
+    # Multi-facet Filters
+    flt_col1, flt_col2, flt_col3, flt_col4, flt_col5 = st.columns(5)
+    with flt_col1:
+        search_query = st.text_input("🔍 Search Employee ID:", placeholder="e.g. 102", key="wf_search")
+    with flt_col2:
+        dept_options = ["All"] + sorted(workforce_df["Department"].unique().tolist())
+        selected_dept = st.selectbox("Department:", dept_options, key="wf_dept")
+    with flt_col3:
+        growth_options = ["All", GROWTH_STATUS_HIGH, GROWTH_STATUS_STABLE, GROWTH_STATUS_SUPPORT]
+        selected_growth = st.selectbox("Growth Status:", growth_options, key="wf_growth")
+    with flt_col4:
+        risk_options = ["All", RISK_HIGH, RISK_MEDIUM, RISK_LOW]
+        selected_risk = st.selectbox("Attrition Risk:", risk_options, key="wf_risk")
+    with flt_col5:
+        priority_options = ["All", "Priority Retention Only", "No Priority Retention"]
+        selected_priority = st.selectbox("Priority Retention:", priority_options, key="wf_priority")
+
+    # Apply Filters
+    filtered_wf = workforce_df.copy()
+    if search_query.strip():
+        filtered_wf = filtered_wf[filtered_wf["EmployeeNumber"].astype(str).str.contains(search_query.strip())]
+    if selected_dept != "All":
+        filtered_wf = filtered_wf[filtered_wf["Department"] == selected_dept]
+    if selected_growth != "All":
+        filtered_wf = filtered_wf[filtered_wf["GrowthStatus"] == selected_growth]
+    if selected_risk != "All":
+        filtered_wf = filtered_wf[filtered_wf["AttritionRisk"] == selected_risk]
+    if selected_priority == "Priority Retention Only":
+        filtered_wf = filtered_wf[filtered_wf["IsPriorityRetention"] == True]
+    elif selected_priority == "No Priority Retention":
+        filtered_wf = filtered_wf[filtered_wf["IsPriorityRetention"] == False]
+
+    st.write(f"Displaying **{len(filtered_wf):,}** of **1,470** employees:")
+
+    # Display Table with exact required columns
+    display_table = filtered_wf[[
+        "EmployeeNumber",
+        "Name",
+        "Department",
+        "JobRole",
+        "GrowthStatus",
+        "AttritionRisk",
+        "ConfidenceFormatted",
+        "PriorityRetention"
+    ]].rename(columns={
+        "EmployeeNumber": "Employee ID",
+        "Name": "Name",
+        "Department": "Department",
+        "JobRole": "Job Role",
+        "GrowthStatus": "Growth Status",
+        "AttritionRisk": "Attrition Risk",
+        "ConfidenceFormatted": "Confidence",
+        "PriorityRetention": "Priority Retention"
+    })
+
+    st.dataframe(
+        display_table,
+        use_container_width=True,
+        hide_index=True,
+        height=380
+    )
+
+    st.markdown("---")
+
+    # Second Row (B): Employee Feedback Section
     st.markdown("### 📩 New Employee Feedback")
     latest_fb = get_latest_feedback()
     fb_metrics = get_feedback_metrics()
@@ -123,46 +289,6 @@ def render_hr_dashboard():
     else:
         st.info("No employee feedback submissions received yet. Once employees submit feedback through their portal, latest summaries will appear here.")
 
-    st.markdown("---")
-    
-    # Third Row: Priority High-Risk Intervention Queue
-    st.markdown("### 🚨 Priority High-Risk Intervention Queue (Top At-Risk Employees)")
-    st.write("Employees with elevated attrition risk probability. Click an employee to automatically load their complete profile and retention plan:")
-    
-    df = load_employee_dataset()
-    pipeline, _ = load_trained_model()
-    
-    X = df[NUMERICAL_FEATURES + CATEGORICAL_FEATURES].copy()
-    probs = pipeline.predict_proba(X)[:, 1]
-    
-    risk_df = pd.DataFrame({
-        "EmployeeNumber": df["EmployeeNumber"],
-        "Department": df["Department"],
-        "JobRole": df["JobRole"],
-        "OverTime": df["OverTime"],
-        "JobSatisfaction": df["JobSatisfaction"],
-        "YearsAtCompany": df["YearsAtCompany"],
-        "RiskScore": (probs * 100.0).round(1),
-        "AttritionProb": (probs * 100.0).round(1)
-    })
-    
-    high_risk_table = risk_df.sort_values(by="RiskScore", ascending=False).head(10)
-    
-    # Display priority table
-    st.dataframe(
-        high_risk_table.rename(columns={
-            "EmployeeNumber": "Employee ID",
-            "JobRole": "Job Role",
-            "OverTime": "OverTime",
-            "JobSatisfaction": "Job Sat (1-4)",
-            "YearsAtCompany": "Tenure (Yrs)",
-            "RiskScore": "Risk Score / 100",
-            "AttritionProb": "Attrition Prob %"
-        }),
-        use_container_width=True,
-        hide_index=True
-    )
-    
     col_jump1, col_jump2 = st.columns([3, 1])
     with col_jump1:
         st.caption("💡 To perform deep-dive risk factor analysis, retention recommendation generation, and generate PDF reports, go to the Employee Search & Prediction page.")

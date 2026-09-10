@@ -20,7 +20,10 @@ def save_prediction_record(
     risk_score: float,
     risk_level: str,
     risk_factors: List[Dict[str, Any]],
-    recommendations: List[Dict[str, Any]]
+    recommendations: List[Dict[str, Any]],
+    growth_status: Optional[str] = None,
+    confidence: Optional[float] = None,
+    priority_retention: Optional[int] = 0
 ) -> int:
     """Saves a prediction record to both SQLite and synced CSV."""
     conn = get_connection()
@@ -31,9 +34,13 @@ def save_prediction_record(
     
     cur.execute("""
         INSERT INTO prediction_history (
-            employee_id, prediction, probability, risk_score, risk_level, risk_factors, recommendations
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (str(employee_id), prediction, probability, risk_score, risk_level, factors_json, recs_json))
+            employee_id, prediction, probability, risk_score, risk_level, risk_factors, recommendations,
+            growth_status, confidence, priority_retention
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        str(employee_id), prediction, probability, risk_score, risk_level,
+        factors_json, recs_json, growth_status, confidence, priority_retention
+    ))
     
     record_id = cur.lastrowid
     conn.commit()

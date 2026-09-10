@@ -12,7 +12,7 @@ def render_feedback_analytics():
         </div>
     """, unsafe_allow_html=True)
     
-    st.info("🔒 **Strict Privacy Policy:** All ratings and open responses reflect solely voluntary submissions through the Employee Feedback portal. Individual private BuddyBot conversations are strictly protected and never shown here.")
+    st.info("🔒 **Strict Privacy Policy:** All ratings and open responses reflect solely voluntary submissions through the Employee Feedback portal. Individual private BuddyBot conversations, Mind-Free Game activities, and Weekend Quiz scores are strictly protected and never shown here.")
 
     metrics = get_feedback_metrics()
     df_feedback = get_feedback_records()
